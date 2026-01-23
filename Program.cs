@@ -23,7 +23,7 @@ internal class Program
         if (!TryLoadChannel(args, out var channel))
             return;
 
-        if (!Config.TryLoad(appConfigDir, out var config))
+        if (!Config.TryLoad(channel.Id, appConfigDir, out var config))
         {
             logger.Fatal("Failed to load config, closing");
             return;
