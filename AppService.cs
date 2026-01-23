@@ -124,8 +124,8 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         var timeSpanStr = timeSpan switch
         {
             TimeSpan ts when ts.TotalMinutes < 1 => "Только что",
-            TimeSpan ts when ts.TotalHours < 1 => $"{(int)ts.TotalMinutes} минут назад",
-            TimeSpan ts => $"{(int)ts.TotalHours} часов назад",
+            TimeSpan ts when ts.TotalHours < 1 => $"{(int)ts.TotalMinutes} мин. назад",
+            TimeSpan ts => $"{(int)ts.TotalHours} ч. назад",
         };
 
         int photoCount, videoCount;
