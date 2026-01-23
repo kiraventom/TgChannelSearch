@@ -39,6 +39,8 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         if (string.IsNullOrWhiteSpace(message.Text))
             return;
 
+        logger.Information("Chat {chat}: received text \"{text}\"", message.Chat.Id, message.Text);
+
         if (message.Text == "/start")
         {
             await StartCommand(message, ct);
@@ -58,6 +60,7 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
 
         if (data is null || string.IsNullOrWhiteSpace(data))
         {
+            logger.Warning("Chat {chat}: received invalid query \"{data}\"", query.Message.Chat.Id, data);
             await client.AnswerCallbackQuery(query.Id, "Ошибка, отправьте новый запрос");
             return;
         }
@@ -65,10 +68,12 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         var dataSplit = data.Split(CALLBACK_QUERY_SEPARATOR);
         if (dataSplit.Length != 2 || !int.TryParse(dataSplit[0], out pageIndex) || string.IsNullOrWhiteSpace(dataSplit[1]))
         {
+            logger.Warning("Chat {chat}: received invalid query \"{data}\"", query.Message.Chat.Id, data);
             await client.AnswerCallbackQuery(query.Id, "Ошибка, отправьте новый запрос");
             return;
         }
 
+        logger.Information("Chat {chat}: received query \"{data}\"", query.Message.Chat.Id, data);
         prompt = dataSplit[1];
 
         await HandleMessagePrompt(query.Message.Chat.Id, prompt, pageIndex, ct, query.Message?.MessageId);
@@ -77,17 +82,22 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
 
     private async Task HandleMessagePrompt(ChatId chatId, string prompt, int postIndex, CancellationToken ct, int? messageId = null)
     {
+        var postNumber = postIndex + 1;
+        logger.Information("Chat {chat}: received prompt \"{prompt}\", post number {postNumber}", chatId, prompt, postNumber);
+
         var query = new SearchQuery(prompt, postIndex, 1);
         var result = await HandleSearchQuery(query);
 
         if (result.TotalCount == 0)
         {
             await client.SendMessage(chatId, $"Поиск по запросу \"{prompt}\" не дал результатов");
+            logger.Information("Chat {chat}: no results for prompt \"{prompt}\" found", chatId, prompt);
             return;
         }
 
-        var postNumber = postIndex + 1;
         var postsCount = result.TotalCount;
+
+        logger.Information("Chat {chat}: showing result {link} with confidence {conf}, {num} out of {total}", chatId, result.Link, result.Confidence, postNumber, postsCount);
 
         var stringBuilder = new StringBuilder()
             .Append(postsCount == 1 ? "Результат" : "Результаты").Append(" по запросу \"").Append(prompt).AppendLine("\":");
@@ -157,7 +167,10 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
             .Append("Видео распознано: ").Append(videoCount).AppendLine()
             .Append("Последнее обновление базы: ").Append(timeSpanStr).AppendLine();
 
-        await client.SendMessage(message.Chat.Id, stringBuilder.ToString());
+        var text = stringBuilder.ToString();
+        await client.SendMessage(message.Chat.Id, text);
+
+        logger.Information("Chat {chat}: sent text {text}", message.Chat.Id, text);
     }
 
     private async Task<SearchResult> HandleSearchQuery(SearchQuery query)
