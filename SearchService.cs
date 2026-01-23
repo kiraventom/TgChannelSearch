@@ -1,22 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Serilog;
+using TgChannelLib;
 using TgChannelLib.Model;
 
 namespace TgChannelSearch;
 
-public class SearchService(ILogger logger, ChannelContext context)
+public record SearchResult(string Link, double Confidence, int TotalCount);
+
+public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelContext context)
 {
     public const int MinPromptLength = 3;
 
-    public async Task<IReadOnlyCollection<Item>> GetResults(ISearchQuery query, SearchMode mode = SearchMode.Recognition, SearchItem item = SearchItem.Post)
+    public async Task<SearchResult> GetResult(ISearchQuery query, SearchItem item = SearchItem.Post)
     {
         var prompt = query.Prompt;
 
         ArgumentNullException.ThrowIfNull(prompt);
 
-        prompt = prompt.Trim().ToLowerInvariant();
         if (prompt.Length < MinPromptLength)
-            return Array.Empty<Item>();
+            return new SearchResult(null, 0, 0);
 
         IQueryable<Item> posts = context.Posts.AsNoTracking();
         IQueryable<Item> comments = context.Comments.AsNoTracking();
@@ -29,43 +31,41 @@ public class SearchService(ILogger logger, ChannelContext context)
             _ => throw new NotSupportedException($"Unexpected {nameof(SearchItem)}: {item.ToString()}")
         };
 
-        IQueryable<Item> results = Enumerable.Empty<Item>().AsQueryable();
+        var pattern = $"%{EscapeLike(prompt)}%";
 
-        if (mode == SearchMode.Text)
-        {
-            results = items
-                .AsNoTracking()
-                .Where(p => p.Text.ToLower().Contains(prompt))
-                .OrderByDescending(p => p.DT)
-                .Skip(query.Offset)
-                .Take(query.Count);
-        }
-        else if (mode == SearchMode.Recognition)
-        {
-            results = items
-                .AsNoTracking()
-                .Where(i => i.Media.Any(m => m.Recognitions.Any(r => r.Text.Contains(prompt))))
-                .Select(i => new
-                {
-                    Item = i,
-                    Best = i.Media.SelectMany(m => m.Recognitions)
-                        .Where(r => r.Text.Contains(prompt))
-                        .OrderByDescending(r => r.Confidence)
-                        .Select(r => r.Confidence)
-                        .First()
-                })
-                .OrderByDescending(x => x.Best)
-                .ThenByDescending(x => x.Item.DT)
-                .Select(x => x.Item)
-                .Skip(query.Offset)
-                .Take(query.Count);
-        }
-        else
-        {
-            logger.Warning("Unexpected {name} = {mode}", nameof(SearchMode), mode.ToString());
-        }
+        var results = items
+            .Select(i => new
+            {
+                Item = i,
+                Best = i.Media.SelectMany(m => m.Recognitions)
+                    .Where(p => EF.Functions.Like(p.Text, pattern, @"\"))
+                    .Select(r => (double?)r.Confidence)
+                    .Max()
+            })
+            .Where(x => x.Best != null)
+            .OrderByDescending(x => x.Best)
+            .ThenByDescending(x => x.Item.DT);
 
-        var list = await results.ToListAsync();
-        return list;
+        var totalCount = await results.CountAsync();
+
+        var result = await results
+            .Skip(query.Offset)
+            .Take(1)
+            .Select(x => new { Item = x.Item, Best = x.Best.Value })
+            .FirstOrDefaultAsync();
+
+        if (result is null)
+            return new SearchResult(null, 0, 0);
+
+        return new SearchResult(result.Item.BuildLink(channelInfo), result.Best, totalCount);
+    }
+
+    private static string EscapeLike(string input)
+    {
+        return input
+            .Replace(@"\", @"\\")
+            .Replace("%", @"\%")
+            .Replace("[", @"\[")
+            .Replace("_", @"\_");
     }
 }
