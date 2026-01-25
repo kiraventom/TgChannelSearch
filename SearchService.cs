@@ -37,7 +37,8 @@ public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelCont
                 Item = i,
                 Best = i.Media.SelectMany(m => m.Recognitions)
                     .Where(p => EF.Functions.Like(p.Text, pattern, @"\"))
-                    .Select(r => (double?)r.Confidence)
+                    .AsEnumerable()
+                    .Select(r => (int?)(r.Confidence * 100))
                     .Max()
             })
             .Where(x => x.Best != null)
@@ -55,7 +56,7 @@ public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelCont
         if (result is null)
             return SearchResult.NothingFound;
 
-        return new SearchResult(result.Item.BuildLink(channelInfo), result.Best, totalCount);
+        return new SearchResult(result.Item.BuildLink(channelInfo), result.Best, result.Item.DT, totalCount);
     }
 
     private static string EscapeLike(string input)

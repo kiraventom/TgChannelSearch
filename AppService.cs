@@ -112,8 +112,7 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         if (postsCount > 1)
             stringBuilder.Append("Пост ").Append(postNumber).Append(" из ").Append(postsCount).AppendLine();
         
-        var confStr = (result.Confidence * 100).ToString("##");
-        stringBuilder.Append("Уверенность: ").Append(confStr).Append('%').AppendLine();
+        stringBuilder.Append("Уверенность: ").Append(result.Confidence).Append('%').AppendLine();
         stringBuilder.Append(result.Link).AppendLine();
 
         var buttons = new List<InlineKeyboardButton>();
