@@ -18,10 +18,10 @@ internal class Program
         var appDataDir = CreateAppDataDir();
         var appConfigDir = CreateAppConfigDir();
 
-        var logger = BuildLogger(appDataDir);
-
         if (!TryLoadChannel(args, out var channel))
             return;
+
+        var logger = BuildLogger(appDataDir, channel);
 
         if (!Config.TryLoad(channel.Id, appConfigDir, out var config))
         {
@@ -71,10 +71,10 @@ internal class Program
 
         if (args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
         {
-            Log.Logger.Information("Usage: TgChannelSearch /path/to/db @OptionalChannelTag>");
-            Log.Logger.Information("Examples:");
-            Log.Logger.Information("\tTgChannelSearch ~/.local/share/TgChannelRecognize/123456789.db");
-            Log.Logger.Information("\tTgChannelSearch ~/987654321.db @test_channel");
+            Console.WriteLine("Usage: TgChannelSearch /path/to/db @OptionalChannelTag>");
+            Console.WriteLine("Examples:");
+            Console.WriteLine("\tTgChannelSearch ~/.local/share/TgChannelRecognize/123456789.db");
+            Console.WriteLine("\tTgChannelSearch ~/987654321.db @test_channel");
             return false;
         }
 
@@ -82,13 +82,13 @@ internal class Program
 
         if (!File.Exists(dbFilePath))
         {
-            Log.Logger.Fatal("Database file {path} does not exist, closing", dbFilePath);
+            Console.Error.WriteLine("Database file {path} does not exist, closing", dbFilePath);
             return false;
         }
 
         if (!Channel.TryParse(dbFilePath, out channel))
         {
-            Log.Logger.Fatal("Failed to figure out channel id, closing");
+            Console.Error.WriteLine("Failed to figure out channel id, closing");
             return false;
         }
 
@@ -96,8 +96,8 @@ internal class Program
         {
             if (string.IsNullOrWhiteSpace(args[1]) || !args[1].StartsWith('@'))
             {
-                Log.Logger.Information("Usage: TgChannelSearch /path/to/db @ChannelTag>");
-                Log.Logger.Information("Example: TgChannelSearch ~/987654321.db @test_channel");
+                Console.WriteLine("Usage: TgChannelSearch /path/to/db @ChannelTag>");
+                Console.WriteLine("Example: TgChannelSearch ~/987654321.db @test_channel");
             }
 
             channel.ChannelTag = args[1].Trim();
@@ -106,12 +106,12 @@ internal class Program
         return true;
     }
 
-    public static ILogger BuildLogger(string appDataDir)
+    public static ILogger BuildLogger(string appDataDir, Channel channel)
     {
         var logDir = Path.Combine(appDataDir, "logs");
         Directory.CreateDirectory(logDir);
 
-        var logFile = Path.Combine(logDir, $"{PROJECT_NAME}-.log");
+        var logFile = Path.Combine(logDir, $"{PROJECT_NAME}-{channel.Id}-.log");
         var logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
