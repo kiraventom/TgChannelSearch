@@ -5,8 +5,6 @@ using TgChannelLib.Model;
 
 namespace TgChannelSearch;
 
-public record SearchResult(string Link, double Confidence, int TotalCount);
-
 public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelContext context)
 {
     public const int MinPromptLength = 3;
@@ -18,7 +16,7 @@ public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelCont
         ArgumentNullException.ThrowIfNull(prompt);
 
         if (prompt.Length < MinPromptLength)
-            return new SearchResult(null, 0, 0);
+            return SearchResult.PromptTooShort;
 
         IQueryable<Item> posts = context.Posts.AsNoTracking();
         IQueryable<Item> comments = context.Comments.AsNoTracking();
@@ -55,7 +53,7 @@ public class SearchService(ILogger logger, IChannelInfo channelInfo, ChannelCont
             .FirstOrDefaultAsync();
 
         if (result is null)
-            return new SearchResult(null, 0, 0);
+            return SearchResult.NothingFound;
 
         return new SearchResult(result.Item.BuildLink(channelInfo), result.Best, totalCount);
     }

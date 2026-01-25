@@ -88,10 +88,17 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         var query = new SearchQuery(prompt, postIndex, 1);
         var result = await HandleSearchQuery(query);
 
-        if (result.TotalCount == 0)
+        if (result.Error == SearchResultError.NothingFound)
         {
             await client.SendMessage(chatId, $"Поиск по запросу \"{prompt}\" не дал результатов");
             logger.Information("Chat {chat}: no results for prompt \"{prompt}\" found", chatId, prompt);
+            return;
+        }
+
+        if (result.Error == SearchResultError.PromptTooShort)
+        {
+            await client.SendMessage(chatId, $"Запросы короче трёх символов не поддерживаются");
+            logger.Information("Chat {chat}: prompt \"{prompt}\" is too short", chatId, prompt);
             return;
         }
 
