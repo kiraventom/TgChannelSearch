@@ -126,9 +126,9 @@ public class AppService(ILogger logger, TelegramBotClient client, Channel channe
         var keyboard = new InlineKeyboardMarkup(buttons);
 
         if (messageId == null)
-            await client.SendMessage(chatId, stringBuilder.ToString(), replyMarkup: keyboard, linkPreviewOptions: new LinkPreviewOptions() { PreferLargeMedia = true } );
+            await client.SendMessage(chatId, stringBuilder.ToString(), replyMarkup: keyboard, linkPreviewOptions: new LinkPreviewOptions());
         else
-            await client.EditMessageText(chatId, messageId.Value, stringBuilder.ToString(), replyMarkup: keyboard, linkPreviewOptions: new LinkPreviewOptions() { PreferLargeMedia = true } );
+            await client.EditMessageText(chatId, messageId.Value, stringBuilder.ToString(), replyMarkup: keyboard, linkPreviewOptions: new LinkPreviewOptions());
     }
 
     private async Task StartCommand(Message message, CancellationToken ct)
