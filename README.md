@@ -1,7 +1,7 @@
-# Search through [TgChannelRecognize](https://github.com/kiraventom/TgChannelRecognize) database with Telegram Bot
+# TgChannelSearch
 
 ### Features
-- Runs effecient search on the database
+- Runs effecient search on the [TgChannelRecognize](https://github.com/kiraventom/TgChannelRecognize) database
 - Supports one channel per bot instance
 - Relies on link media preview, does not download media
 
