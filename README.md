@@ -1,4 +1,4 @@
-# Telegram bot for seaching the [TgChannelRecognize](https://github.com/kiraventom/TgChannelRecognize) database
+# Search through [TgChannelRecognize](https://github.com/kiraventom/TgChannelRecognize) database with Telegram Bot
 
 ### Features
 - Runs effecient search on the database
