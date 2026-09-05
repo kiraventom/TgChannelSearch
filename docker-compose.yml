@@ -1,0 +1,8 @@
+services:
+  tg-channel-search:
+    build: .
+    command: ${RECOGNIZE_DB:?Error: RECOGNIZE_DB is required in .env} ${CHANNEL_TAG:-}
+    restart: unless-stopped 
+    volumes:
+      - ${CONFIG_DIR:?Error: CONFIG_DIR is required}:/app/config
+      - ${DATA_DIR:?Error: DATA_DIR is required}:/app/data

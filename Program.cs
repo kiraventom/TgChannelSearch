@@ -126,21 +126,9 @@ internal class Program
 
     private static string CreateAppConfigDir()
     {
-        string path;
-        if (OperatingSystem.IsWindows())
-        {
-            path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    PROJECT_NAME,
-                    "config");
-        }
-        else
-        {
-            path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".config",
-                    PROJECT_NAME);
-        }
+        var path = Path.Combine(
+                    Environment.CurrentDirectory,
+		    "config");
 
         Directory.CreateDirectory(path);
         return path;
@@ -148,22 +136,9 @@ internal class Program
 
     public static string CreateAppDataDir()
     {
-        string path;
-        if (OperatingSystem.IsWindows())
-        {
-            path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    PROJECT_NAME,
-                    "data");
-        }
-        else
-        {
-            path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".local",
-                    "share",
-                    PROJECT_NAME);
-        }
+        var path = Path.Combine(
+                    Environment.CurrentDirectory,
+		    "data");
 
         Directory.CreateDirectory(path);
         return path;
