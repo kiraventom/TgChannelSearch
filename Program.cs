@@ -78,11 +78,11 @@ internal class Program
             return false;
         }
 
-        var dbFilePath = args[0];
+        var dbFilePath = Path.Combine("recognize", args[0]);
 
         if (!File.Exists(dbFilePath))
         {
-            Console.Error.WriteLine("Database file {path} does not exist, closing", dbFilePath);
+            Console.Error.WriteLine("Database file {0} does not exist, closing", dbFilePath);
             return false;
         }
 
