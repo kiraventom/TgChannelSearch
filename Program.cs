@@ -18,16 +18,16 @@ internal class Program
         var appDataDir = CreateAppDataDir();
         var appConfigDir = CreateAppConfigDir();
 
-        if (!TryLoadChannel(args, out var channel))
-            return;
+        var logger = BuildLogger(appDataDir);
 
-        var logger = BuildLogger(appDataDir, channel);
-
-        if (!Config.TryLoad(channel.Id, appConfigDir, out var config))
+        if (!Config.TryLoad(appConfigDir, out var config))
         {
             logger.Fatal("Failed to load config, closing");
             return;
         }
+
+        if (!TryLoadChannel(args, out var channel))
+            return;
 
         var builder = Host.CreateApplicationBuilder();
 
@@ -106,12 +106,12 @@ internal class Program
         return true;
     }
 
-    public static ILogger BuildLogger(string appDataDir, Channel channel)
+    public static ILogger BuildLogger(string appDataDir)
     {
         var logDir = Path.Combine(appDataDir, "logs");
         Directory.CreateDirectory(logDir);
 
-        var logFile = Path.Combine(logDir, $"{PROJECT_NAME}-{channel.Id}-.log");
+        var logFile = Path.Combine(logDir, $"{PROJECT_NAME}-.log");
         var logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
@@ -126,9 +126,7 @@ internal class Program
 
     private static string CreateAppConfigDir()
     {
-        var path = Path.Combine(
-                    Environment.CurrentDirectory,
-		    "config");
+        var path = Path.Combine(Environment.CurrentDirectory, "config");
 
         Directory.CreateDirectory(path);
         return path;
@@ -136,9 +134,7 @@ internal class Program
 
     public static string CreateAppDataDir()
     {
-        var path = Path.Combine(
-                    Environment.CurrentDirectory,
-		    "data");
+        var path = Path.Combine(Environment.CurrentDirectory, "data");
 
         Directory.CreateDirectory(path);
         return path;

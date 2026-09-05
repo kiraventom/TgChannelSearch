@@ -11,9 +11,9 @@ public class Config(string token)
 
     private static Config Default { get; } = new Config("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11");
 
-    public static bool TryLoad(long channelId, string configDir, out Config config)
+    public static bool TryLoad(string configDir, out Config config)
     {
-        var configPath = Path.Combine(configDir, $"config_{channelId}.json");
+        var configPath = Path.Combine(configDir, "config.json");
 
         if (!File.Exists(configPath))
         {
